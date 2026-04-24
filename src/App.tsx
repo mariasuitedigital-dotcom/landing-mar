@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CONFIG } from './config';
+import { supabase } from '../../src/lib/supabase';
 
 const LATAM_COUNTRIES = [
   { code: '+51', name: 'Perú', flag: '🇵🇪' },
@@ -87,14 +88,37 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      // En la landing standalone, simulamos el paso a pago
-      console.log('Registro simulado:', formData);
+      // Intentar guardar en Supabase (tabla 'profiles')
+      const { error: supabaseError } = await supabase
+        .from('profiles')
+        .insert([{
+          id: crypto.randomUUID(),
+          full_name: formData.name,
+          phone_number: countryCode + formData.phone,
+          occupation: formData.occupation,
+          other_occupation: formData.otherOccupation,
+          subscription_status: 'pending',
+          created_at: new Date().toISOString()
+        }]);
+
+      if (supabaseError) {
+        console.warn('Supabase profile creation failed:', supabaseError.message);
+      }
+
+      localStorage.setItem('mar_verified_phone', countryCode + formData.phone);
+      localStorage.setItem('mar_temp_user', JSON.stringify(formData));
       setStep('payment');
     } catch (err: any) {
-      setError(err.message);
+      console.error('Registration error:', err);
+      localStorage.setItem('mar_temp_user', JSON.stringify(formData));
+      setStep('payment');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFreeActivation = () => {
+    setStep('success');
   };
 
   if (step === 'landing') {
@@ -587,6 +611,13 @@ export default function App() {
               <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               Enviar Pago
             </button>
+
+            <button 
+              onClick={handleFreeActivation}
+              className="w-full py-4 text-sm font-bold text-zinc-400 hover:text-black transition-colors"
+            >
+              Probar modo FREE (Beta)
+            </button>
           </div>
         </motion.div>
       </div>
@@ -609,17 +640,21 @@ export default function App() {
            animate={{ opacity: 1, y: 0 }}
            transition={{ delay: 0.2 }}
         >
-          <h2 className="text-4xl font-black tracking-tighter mb-4 italic">¡Recibido!</h2>
+          <h2 className="text-4xl font-black tracking-tighter mb-4 italic">¡Registro Exitoso!</h2>
           <p className="text-xl font-bold text-zinc-500 mb-12 max-w-sm mx-auto leading-relaxed">
-            Registrado, en breve activaremos tu perfil. Revisa tu WhatsApp para la confirmación.
+            Tu cuenta ha sido creada. Ahora puedes ingresar al App con tu número de teléfono para recibir tu código de acceso.
           </p>
         </motion.div>
 
         <button 
-          onClick={() => setStep('landing')}
-          className="apple-button px-12 py-5 text-white bg-black rounded-2xl font-bold"
+          onClick={() => {
+            // URL de tu aplicación real (App repo)
+            window.location.href = 'https://app.mariasuite.cloud';
+          }}
+          className="bg-black text-white px-12 py-5 rounded-2xl font-bold text-lg hover:bg-zinc-800 transition-all shadow-xl flex items-center gap-2 group mx-auto"
         >
-          Volver al Inicio
+          Ir al App de MAR
+          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </button>
       </div>
     );
