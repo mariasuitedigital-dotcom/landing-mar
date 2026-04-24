@@ -74,9 +74,10 @@ export default function App() {
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (adminPassword === 'Admin2024') {
-      // In standalone landing, we might just redirect or set a flag
-      alert('Modo administrador activado en la plataforma principal.');
+      setIsAdminOpen(true);
       setShowAdminLogin(false);
+      setAdminPassword('');
+      setError(null);
     } else {
       setError('Contraseña administrativa incorrecta');
       setAdminPassword('');
@@ -231,7 +232,7 @@ export default function App() {
       <div className="min-h-screen bg-white font-sans overflow-x-hidden text-zinc-900">
         {/* Navigation */}
         <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md z-[100] border-b border-zinc-100 flex justify-between items-center px-6 py-4">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={handleLogoClick}>
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white shadow-lg">
               <Lightbulb className="w-5 h-5 fill-yellow-400 text-yellow-400" />
             </div>
@@ -306,6 +307,53 @@ export default function App() {
             </button>
           </motion.div>
         </section>
+
+        {/* Admin Login Modal */}
+        <AnimatePresence>
+          {showAdminLogin && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-6"
+            >
+              <motion.div 
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl"
+              >
+                <h3 className="text-2xl font-black mb-4">Acceso Admin</h3>
+                <form onSubmit={handleAdminLogin} className="space-y-4">
+                  <input 
+                    type="password"
+                    placeholder="Contraseña"
+                    className="w-full bg-zinc-100 border-none rounded-2xl p-4 font-bold"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    autoFocus
+                  />
+                  {error && <p className="text-red-500 text-xs font-bold">{error}</p>}
+                  <div className="flex gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => setShowAdminLogin(false)}
+                      className="flex-1 py-4 font-bold text-zinc-400"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit"
+                      className="flex-1 bg-black text-white py-4 rounded-2xl font-bold"
+                    >
+                      Entrar
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Methodology Section */}
         <section id="methodology" className="py-24 px-6">
@@ -502,10 +550,17 @@ export default function App() {
 
         {/* Footer */}
         <footer className="py-16 px-6 border-t border-zinc-100 text-center">
-          <div className="flex justify-center gap-8 mb-8 text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px]">
+          <div className="flex justify-center items-center gap-8 mb-8 text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px]">
             <a href={`https://wa.me/${CONFIG.whatsapp}`} target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">WhatsApp</a>
             <a href={CONFIG.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Instagram</a>
             <a href={CONFIG.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Facebook</a>
+            <button 
+              onClick={() => setShowAdminLogin(true)} 
+              className="text-zinc-200 hover:text-black transition-colors"
+              title="Admin"
+            >
+              <Star className="w-3 h-3" />
+            </button>
           </div>
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-6 h-6 bg-black rounded flex items-center justify-center text-white">
