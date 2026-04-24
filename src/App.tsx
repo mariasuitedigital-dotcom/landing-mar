@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CONFIG } from './config';
-import { supabase } from '../../src/lib/supabase';
+import { supabase } from './lib/supabase';
 
 const LATAM_COUNTRIES = [
   { code: '+51', name: 'Perú', flag: '🇵🇪' },

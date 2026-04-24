@@ -1,14 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import { CONFIG } from '../config';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://msupabase.mariasuite.cloud';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.WOQGyV3-JHK-JVSw7hLa8ME7FlrgpOLAfpWkay_4n_Q';
+if (!CONFIG.supabase.url || !CONFIG.supabase.anonKey) {
+  console.warn('Supabase configuration is missing in Landing. Check your environment variables.');
+}
 
 export const supabase = createClient(
-  supabaseUrl,
-  supabaseAnonKey,
-  {
-    db: {
-      schema: 'mar'
-    }
-  }
+  CONFIG.supabase.url,
+  CONFIG.supabase.anonKey
 );
