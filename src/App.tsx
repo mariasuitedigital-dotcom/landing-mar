@@ -90,6 +90,7 @@ export default function App() {
     try {
       // Intentar guardar en Supabase (tabla 'profiles')
       const { error: supabaseError } = await supabase
+        .schema('mar')
         .from('profiles')
         .insert([{
           id: crypto.randomUUID(),
@@ -120,6 +121,110 @@ export default function App() {
   const handleFreeActivation = () => {
     setStep('success');
   };
+
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [adminConfig, setAdminConfig] = useState({
+    whatsapp: CONFIG.whatsapp,
+    instagram: CONFIG.instagram,
+    yape_qr_url: '',
+  });
+
+  // Cargar configuración desde Supabase al iniciar
+  useEffect(() => {
+    const fetchConfig = async () => {
+      const { data, error } = await supabase
+        .schema('mar')
+        .from('landing_settings')
+        .select('*')
+        .eq('id', 1)
+        .single();
+      
+      if (data && !error) {
+        setAdminConfig({
+          whatsapp: data.whatsapp,
+          instagram: data.instagram,
+          yape_qr_url: data.yape_qr_url,
+        });
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  const saveAdminSettings = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .schema('mar')
+        .from('landing_settings')
+        .update({
+          whatsapp: adminConfig.whatsapp,
+          instagram: adminConfig.instagram,
+          yape_qr_url: adminConfig.yape_qr_url,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', 1);
+
+      if (error) throw error;
+      alert('¡Configuración guardada en Supabase (Schema: mar)!');
+      setIsAdminOpen(false);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert('Error al guardar: ' + (err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isAdminOpen) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-white p-8 font-sans">
+        <div className="max-w-2xl mx-auto space-y-8">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-black">Configuración MAR</h1>
+            <button onClick={() => setIsAdminOpen(false)} className="text-zinc-500 hover:text-white">Cerrar</button>
+          </div>
+          
+          <div className="grid gap-6 bg-zinc-900 p-8 rounded-3xl border border-zinc-800">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-zinc-400 uppercase tracking-widest">WhatsApp de Ayuda</label>
+              <input 
+                type="text" 
+                value={adminConfig.whatsapp}
+                onChange={(e) => setAdminConfig({...adminConfig, whatsapp: e.target.value})}
+                className="w-full bg-zinc-800 border-none rounded-xl p-4 font-mono"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Instagram URL</label>
+              <input 
+                type="text" 
+                value={adminConfig.instagram}
+                onChange={(e) => setAdminConfig({...adminConfig, instagram: e.target.value})}
+                className="w-full bg-zinc-800 border-none rounded-xl p-4 font-mono"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-zinc-400 uppercase tracking-widest">URL Imagen QR Yape/Plin</label>
+              <input 
+                type="text" 
+                placeholder="https://tu-imagen.com/qr.jpg"
+                value={adminConfig.yape_qr_url}
+                onChange={(e) => setAdminConfig({...adminConfig, yape_qr_url: e.target.value})}
+                className="w-full bg-zinc-800 border-none rounded-xl p-4 font-mono"
+              />
+            </div>
+            <button 
+              onClick={saveAdminSettings}
+              className="w-full bg-white text-black py-4 rounded-xl font-bold hover:bg-zinc-200 transition-colors"
+            >
+              Guardar Cambios
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (step === 'landing') {
     return (
@@ -495,6 +600,12 @@ export default function App() {
           onSubmit={handleRegister}
           className="max-w-md w-full space-y-5 bg-zinc-50 p-10 rounded-[48px]"
         >
+          <div 
+            onClick={() => setIsAdminOpen(true)}
+            className="w-16 h-16 bg-black rounded-2xl mx-auto flex items-center justify-center text-white shadow-xl cursor-pointer hover:scale-105 transition-transform mb-2"
+          >
+            <Users className="w-8 h-8" />
+          </div>
           <h2 className="text-3xl font-black tracking-tighter text-center mb-4">Crea tu cuenta</h2>
           
           <div className="space-y-4">
@@ -595,29 +706,53 @@ export default function App() {
           </div>
 
           <div className="space-y-4">
-            <div className="p-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-[24px]">
-              <input 
-                placeholder="Ingresa tu Código de Operación"
-                className="w-full bg-white border-none rounded-[22px] px-6 py-5 outline-none font-black text-center text-lg placeholder:text-zinc-300 placeholder:font-bold"
-                value={paymentCode}
-                onChange={e => setPaymentCode(e.target.value)}
-              />
-            </div>
-            
-            <button 
-              onClick={() => setStep('success')}
-              className="apple-button w-full py-5 flex items-center justify-center gap-2 group text-white bg-black rounded-2xl font-bold"
-            >
-              <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              Enviar Pago
-            </button>
-
-            <button 
+            {/* OPCIÓN FREE DESTACADA */}
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
               onClick={handleFreeActivation}
-              className="w-full py-4 text-sm font-bold text-zinc-400 hover:text-black transition-colors"
+              className="bg-black text-white p-6 rounded-3xl cursor-pointer border-2 border-transparent hover:border-zinc-400 transition-all shadow-2xl relative overflow-hidden group"
             >
-              Probar modo FREE (Beta)
-            </button>
+              <div className="absolute top-4 right-4 bg-zinc-800 text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-widest">
+                Modo Recomendado
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                  <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-xl font-black italic">PROBAR GRATIS (BETA)</h3>
+                  <p className="text-zinc-400 text-sm font-medium">Activa tu cuenta al instante</p>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center justify-end text-sm font-bold gap-2">
+                Empezar ya <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </motion.div>
+
+            <div className="relative py-4">
+              <div className="absolute inset-0 flex items-center text-zinc-200"><div className="w-full border-t border-zinc-100"></div></div>
+              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest text-zinc-300 bg-white px-4">ó activa con aporte</div>
+            </div>
+
+            {/* OPCIÓN PAGO (MINIMIZADA) */}
+            <div className="space-y-4">
+               <div className="p-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-[24px]">
+                 <input 
+                   placeholder="Ingresa tu Código de Operación"
+                   className="w-full bg-white border-none rounded-[22px] px-6 py-5 outline-none font-black text-center text-lg placeholder:text-zinc-300 placeholder:font-bold"
+                   value={paymentCode}
+                   onChange={e => setPaymentCode(e.target.value)}
+                 />
+               </div>
+               
+               <button 
+                 onClick={() => setStep('success')}
+                 className="apple-button w-full py-5 flex items-center justify-center gap-2 group text-white bg-black rounded-2xl font-bold"
+               >
+                 <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                 Validar Pago Yape
+               </button>
+            </div>
           </div>
         </motion.div>
       </div>
