@@ -5,7 +5,7 @@ if (!CONFIG.supabase.url || !CONFIG.supabase.anonKey) {
   console.warn('Supabase configuration is missing in Landing. Check your environment variables.');
 }
 
-export const supabase = createClient(
-  CONFIG.supabase.url,
-  CONFIG.supabase.anonKey
-);
+const supabaseUrl = CONFIG.supabase.url || 'https://placeholder.supabase.co';
+const supabaseKey = CONFIG.supabase.anonKey || 'placeholder';
+
+export const supabase = createClient(supabaseUrl, supabaseKey);

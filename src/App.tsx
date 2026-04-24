@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Lightbulb, 
   ChevronRight, 
-  Brain, 
+  Star,  Brain, 
   Waves, 
   Rocket, 
   GraduationCap, 
@@ -156,13 +156,13 @@ export default function App() {
       const { error } = await supabase
         .schema('mar')
         .from('landing_settings')
-        .update({
+        .upsert({
+          id: 1,
           whatsapp: adminConfig.whatsapp,
           instagram: adminConfig.instagram,
           yape_qr_url: adminConfig.yape_qr_url,
           updated_at: new Date().toISOString(),
-        })
-        .eq('id', 1);
+        });
 
       if (error) throw error;
       alert('¡Configuración guardada en Supabase (Schema: mar)!');
@@ -694,9 +694,9 @@ export default function App() {
           <div className="bg-white p-8 rounded-[40px] shadow-sm border border-zinc-50 text-center space-y-4">
              <div className="w-48 h-48 bg-purple-50 mx-auto rounded-3xl flex items-center justify-center border-4 border-purple-600 shadow-xl overflow-hidden group">
                 <img 
-                  src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=YapeMAR" 
+                  src={adminConfig.yape_qr_url || "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=YapeMAR"} 
                   alt="QR Yape" 
-                  className="w-40 h-40 group-hover:scale-110 transition-transform duration-500" 
+                  className="w-40 h-40 group-hover:scale-110 transition-transform duration-500 object-contain" 
                 />
              </div>
              <div>
